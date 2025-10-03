@@ -1,0 +1,10 @@
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Application Settings
+DEBUG=True
+HOST=0.0.0.0
+PORT=8000
+
+# Database (for later)
+DATABASE_URL=sqlite:///./knowledge_base.db

@@ -3,15 +3,16 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
 # AI/ML
-openai==1.3.5
+openai>=1.12.0
 numpy==1.24.3
+httpx>=0.24.0
 
 # Data Processing
 python-multipart==0.0.6
 aiofiles==23.2.1
 
 # Database
-sqlite3  # Built-in with Python
+# sqlite3 is built-in with Python - no need to install
 
 # Development
 python-dotenv==1.0.0
