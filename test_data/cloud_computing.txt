@@ -1,0 +1,29 @@
+Cloud Computing Essentials
+
+Cloud computing is the delivery of computing services—including servers, storage, databases, networking, software, analytics, and intelligence—over the Internet ("the cloud") to offer faster innovation, flexible resources, and economies of scale.
+
+Service Models
+
+Infrastructure as a Service (IaaS): Provides virtualized computing resources over the internet. Examples include Amazon EC2, Google Compute Engine, and Microsoft Azure Virtual Machines.
+
+Platform as a Service (PaaS): Offers hardware and software tools over the internet, typically for application development. Examples include Google App Engine, Heroku, and AWS Elastic Beanstalk.
+
+Software as a Service (SaaS): Delivers software applications over the internet, on a subscription basis. Examples include Gmail, Salesforce, and Microsoft Office 365.
+
+Deployment Models
+
+Public Cloud: Services offered over the public internet and available to anyone who wants to purchase them.
+
+Private Cloud: Computing services offered either over the internet or a private internal network to select users instead of the general public.
+
+Hybrid Cloud: Combines public and private clouds, allowing data and applications to be shared between them.
+
+Benefits of Cloud Computing
+
+Cost Savings: Eliminates the capital expense of buying hardware and software
+Scalability: Easy to scale up or down based on demand
+Flexibility: Access services from anywhere with an internet connection
+Reliability: Data backup and disaster recovery are easier and less expensive
+Security: Cloud providers offer many security features and policies
+
+Challenges include data security concerns, potential downtime, and vendor lock-in issues.

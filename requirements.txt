@@ -16,6 +16,7 @@ aiofiles==23.2.1
 
 # Development
 python-dotenv==1.0.0
+requests==2.31.0
 
 # TODO: Add more dependencies as needed during development
 # - Vector database client (if we choose external)

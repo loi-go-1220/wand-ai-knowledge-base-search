@@ -12,6 +12,7 @@ from app.config import settings
 from app.models import DocumentUpload, SearchQuery, SearchResult, QARequest, QAResponse
 from app.document_processor import DocumentProcessor
 from app.storage import storage
+from app.qa_service import QAService
 
 app = FastAPI(
     title="AI Knowledge Base",
@@ -20,6 +21,7 @@ app = FastAPI(
 )
 
 processor = DocumentProcessor()
+qa_service = QAService()
 
 @app.get("/")
 async def root():
@@ -38,7 +40,7 @@ async def health_check():
         "status": "healthy",
         "openai_configured": bool(settings.OPENAI_API_KEY),
         "storage_stats": storage.get_stats(),
-        "endpoints": ["/", "/health", "/docs", "/documents", "/upload", "/search"]
+        "endpoints": ["/", "/health", "/docs", "/documents", "/upload", "/search", "/ask"]
     }
 
 @app.post("/upload")
@@ -107,11 +109,14 @@ async def search_documents(query: SearchQuery):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
-# TODO: Implement Q&A endpoint
-# @app.post("/ask", response_model=QAResponse)
-# async def ask_question(request: QARequest):
-#     """Answer questions using retrieved context"""
-#     pass
+@app.post("/ask", response_model=QAResponse)
+async def ask_question(request: QARequest):
+    """Answer questions using retrieved context and GPT-4"""
+    try:
+        response = qa_service.answer_question(request.question, request.context_limit)
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Q&A failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
