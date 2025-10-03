@@ -49,20 +49,44 @@ class DocumentProcessor:
     
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        Generate embeddings for a list of texts
-        TODO: Add batch processing and error handling
+        Generate embeddings for a list of texts with better error handling
         """
-        try:
-            response = self.client.embeddings.create(
-                model=settings.OPENAI_EMBEDDING_MODEL,
-                input=texts
-            )
+        if not texts:
+            return []
             
-            embeddings = [data.embedding for data in response.data]
-            return embeddings
+        # Filter out empty texts
+        valid_texts = [text.strip() for text in texts if text.strip()]
+        if not valid_texts:
+            print("⚠️  No valid texts to embed")
+            return [[] for _ in texts]
+        
+        try:
+            # Batch size limit for OpenAI API
+            batch_size = 100
+            all_embeddings = []
+            
+            for i in range(0, len(valid_texts), batch_size):
+                batch = valid_texts[i:i + batch_size]
+                print(f"   Generating embeddings for batch {i//batch_size + 1} ({len(batch)} texts)")
+                
+                response = self.client.embeddings.create(
+                    model=settings.OPENAI_EMBEDDING_MODEL,
+                    input=batch
+                )
+                
+                batch_embeddings = [data.embedding for data in response.data]
+                all_embeddings.extend(batch_embeddings)
+            
+            return all_embeddings
             
         except Exception as e:
-            print(f"Embedding generation failed: {e}")
+            print(f"❌ Embedding generation failed: {e}")
+            if "rate_limit" in str(e).lower():
+                print("   Rate limit hit - consider adding delays between requests")
+            elif "invalid_request" in str(e).lower():
+                print("   Invalid request - check text content and length")
+            
+            # Return empty embeddings to prevent crashes
             return [[] for _ in texts]
     
     def process_document(self, filename: str, content: str) -> Document:
