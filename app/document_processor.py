@@ -20,13 +20,19 @@ class DocumentProcessor:
     
     def chunk_text(self, text: str) -> List[str]:
         """
-        Simple text chunking - split by paragraphs/sentences
-        TODO: Implement smarter chunking later (semantic boundaries)
+        Improved text chunking - handles different content types
         """
-        text = re.sub(r'\s+', ' ', text.strip())
+        text = text.strip()
         
+        if '\n\n' in text:
+            return self._chunk_by_paragraphs(text)
+        else:
+            print("   No paragraph breaks found, using line-based chunking")
+            return self._chunk_by_lines(text)
+    
+    def _chunk_by_paragraphs(self, text: str) -> List[str]:
+        """Original paragraph-based chunking"""
         paragraphs = text.split('\n\n')
-        
         chunks = []
         current_chunk = ""
         
@@ -41,6 +47,30 @@ class DocumentProcessor:
                     current_chunk += "\n\n" + paragraph
                 else:
                     current_chunk = paragraph
+        
+        if current_chunk.strip():
+            chunks.append(current_chunk.strip())
+        
+        return chunks
+    
+    def _chunk_by_lines(self, text: str) -> List[str]:
+        """Line-based chunking for transcripts, code, etc."""
+        lines = text.split('\n')
+        chunks = []
+        current_chunk = ""
+        
+        for line in lines:
+            test_chunk = current_chunk + "\n" + line if current_chunk else line
+            estimated_tokens = len(test_chunk) // 4
+            
+            if estimated_tokens > settings.MAX_CHUNK_SIZE and current_chunk:
+                chunks.append(current_chunk.strip())
+                current_chunk = line
+            else:
+                if current_chunk:
+                    current_chunk += "\n" + line
+                else:
+                    current_chunk = line
         
         if current_chunk.strip():
             chunks.append(current_chunk.strip())
