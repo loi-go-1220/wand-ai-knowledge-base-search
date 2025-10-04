@@ -3,10 +3,12 @@ FastAPI app for AI Knowledge Base
 Now with actual functionality!
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from typing import List
 import os
+import time
 
 from app.config import settings
 from app.models import DocumentUpload, SearchQuery, SearchResult, QARequest, QAResponse
@@ -14,12 +16,42 @@ from app.document_processor import DocumentProcessor
 from app.storage import storage
 from app.qa_service import QAService
 from app.completeness_checker import CompletenessChecker
+from app.monitoring import monitor
 
 app = FastAPI(
     title="AI Knowledge Base",
     description="Semantic search and Q&A system using OpenAI",
     version="0.3.0"
 )
+
+# Simple monitoring decorator (fallback if middleware doesn't work)
+def track_request(endpoint: str):
+    """Decorator to track request performance"""
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = await func(*args, **kwargs)
+                process_time = time.time() - start_time
+                monitor.record_request(endpoint, process_time, 200)
+                return result
+            except HTTPException as e:
+                process_time = time.time() - start_time
+                monitor.record_request(endpoint, process_time, e.status_code)
+                raise
+            except Exception as e:
+                process_time = time.time() - start_time
+                monitor.record_request(endpoint, process_time, 500)
+                raise
+        return wrapper
+    return decorator
+
+# Add middleware if possible, otherwise use decorator approach
+try:
+    app.add_middleware(MonitoringMiddleware)
+    print("✅ Monitoring middleware enabled")
+except Exception as e:
+    print(f"⚠️  Middleware not available, using decorator approach: {e}")
 
 processor = DocumentProcessor()
 qa_service = QAService()
@@ -42,7 +74,7 @@ async def health_check():
         "status": "healthy",
         "openai_configured": bool(settings.OPENAI_API_KEY),
         "storage_stats": storage.get_stats(),
-        "endpoints": ["/", "/health", "/docs", "/documents", "/upload", "/search", "/ask", "/completeness"]
+        "endpoints": ["/", "/health", "/docs", "/documents", "/upload", "/search", "/ask", "/completeness", "/metrics"]
     }
 
 @app.post("/upload")
@@ -181,6 +213,20 @@ async def check_completeness():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Completeness check failed: {str(e)}")
+
+@app.get("/metrics")
+async def get_metrics():
+    """
+    Get system performance metrics and monitoring data
+    """
+    try:
+        return {
+            "system_stats": monitor.get_stats(),
+            "health_status": monitor.get_health_status(),
+            "storage_stats": storage.get_stats()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Metrics collection failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

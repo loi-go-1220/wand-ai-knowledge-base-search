@@ -112,6 +112,33 @@ def test_qa():
         except Exception as e:
             print(f"   ❌ Q&A error for '{question}': {e}")
 
+def test_monitoring():
+    """Test monitoring and metrics endpoints"""
+    print("\n📊 Testing monitoring system...")
+    
+    try:
+        response = requests.get(f"{BASE_URL}/metrics")
+        if response.status_code == 200:
+            data = response.json()
+            print("   ✅ Metrics endpoint working")
+            
+            # Display key metrics
+            system_stats = data.get('system_stats', {})
+            health_status = data.get('health_status', {})
+            
+            print(f"      Uptime: {system_stats.get('uptime_formatted', 'Unknown')}")
+            print(f"      Total requests: {system_stats.get('total_requests', 0)}")
+            print(f"      Error rate: {system_stats.get('error_rate', 0)}%")
+            print(f"      Health status: {health_status.get('status', 'Unknown')}")
+            
+            if health_status.get('issues'):
+                print(f"      Issues: {', '.join(health_status['issues'])}")
+        else:
+            print(f"   ❌ Metrics endpoint failed: {response.text}")
+            
+    except Exception as e:
+        print(f"   ❌ Monitoring error: {e}")
+
 def main():
     """Run all tests"""
     print("🧪 Testing AI Knowledge Base System")
@@ -138,10 +165,14 @@ def main():
     # Test 4: Q&A
     test_qa()
     
+    # Test 5: Monitoring
+    test_monitoring()
+    
     print("\n" + "=" * 50)
     print("✨ System test complete!")
     print(f"📊 Documents uploaded: {len(uploaded)}")
     print("🌐 Try the interactive docs at: http://localhost:8000/docs")
+    print("📈 View metrics at: http://localhost:8000/metrics")
 
 if __name__ == "__main__":
     main()
