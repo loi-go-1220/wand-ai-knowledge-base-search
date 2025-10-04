@@ -1,0 +1,46 @@
+# AI Knowledge Base - Docker Compose Configuration
+# Requires Docker version 1.24+ and Docker Compose 1.18+
+# For older versions, run locally with: python main.py
+
+version: '3.3'
+
+services:
+  knowledge-base:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DEBUG=False
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ./test_data:/app/test_data:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Optional: Future enhancements
+# Uncomment these for production deployment with persistent storage
+
+#  redis:
+#    image: redis:7-alpine
+#    ports:
+#      - "6379:6379"
+#    restart: unless-stopped
+#
+#  postgres:
+#    image: postgres:15-alpine
+#    environment:
+#      POSTGRES_DB: knowledge_base
+#      POSTGRES_USER: kb_user
+#      POSTGRES_PASSWORD: kb_password
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    restart: unless-stopped
+
+#volumes:
+#  postgres_data:
