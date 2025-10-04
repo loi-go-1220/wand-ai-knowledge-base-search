@@ -11,6 +11,7 @@ from openai import OpenAI
 
 from .models import Document, DocumentChunk
 from .config import settings
+from .cache import embedding_cache, cached
 
 class DocumentProcessor:
     """Handles document processing and embedding generation"""
@@ -77,6 +78,7 @@ class DocumentProcessor:
         
         return chunks
     
+    @cached(ttl=86400, cache_instance=embedding_cache)  # Cache for 24 hours
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
         Generate embeddings for a list of texts with better error handling

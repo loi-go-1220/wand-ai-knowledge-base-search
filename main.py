@@ -17,6 +17,8 @@ from app.storage import storage
 from app.qa_service import QAService
 from app.completeness_checker import CompletenessChecker
 from app.monitoring import monitor
+from app.cache import default_cache, embedding_cache, search_cache
+from app.logger import logger, log_performance, log_error
 
 app = FastAPI(
     title="AI Knowledge Base",
@@ -74,7 +76,7 @@ async def health_check():
         "status": "healthy",
         "openai_configured": bool(settings.OPENAI_API_KEY),
         "storage_stats": storage.get_stats(),
-        "endpoints": ["/", "/health", "/docs", "/documents", "/upload", "/search", "/ask", "/completeness", "/metrics"]
+        "endpoints": ["/", "/health", "/docs", "/documents", "/upload", "/search", "/ask", "/completeness", "/metrics", "/cache"]
     }
 
 @app.post("/upload")
@@ -223,10 +225,55 @@ async def get_metrics():
         return {
             "system_stats": monitor.get_stats(),
             "health_status": monitor.get_health_status(),
-            "storage_stats": storage.get_stats()
+            "storage_stats": storage.get_stats(),
+            "cache_stats": {
+                "default_cache": default_cache.get_stats(),
+                "embedding_cache": embedding_cache.get_stats(),
+                "search_cache": search_cache.get_stats()
+            }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Metrics collection failed: {str(e)}")
+
+@app.get("/cache")
+async def get_cache_info():
+    """
+    Get cache statistics and management info
+    """
+    try:
+        return {
+            "cache_stats": {
+                "default_cache": default_cache.get_stats(),
+                "embedding_cache": embedding_cache.get_stats(), 
+                "search_cache": search_cache.get_stats()
+            },
+            "cache_config": {
+                "default_ttl": default_cache.default_ttl,
+                "embedding_ttl": embedding_cache.default_ttl,
+                "search_ttl": search_cache.default_ttl
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cache info failed: {str(e)}")
+
+@app.delete("/cache")
+async def clear_all_caches():
+    """
+    Clear all caches (useful for development/testing)
+    """
+    try:
+        default_cache.clear()
+        embedding_cache.clear()
+        search_cache.clear()
+        
+        logger.info("All caches cleared")
+        
+        return {
+            "message": "All caches cleared successfully",
+            "cleared_caches": ["default_cache", "embedding_cache", "search_cache"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cache clear failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
